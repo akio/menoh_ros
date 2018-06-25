@@ -1,0 +1,6 @@
+<library path="lib/libmenoh_ros">
+  <class name="menoh_ros/MenohNodelet" type="menoh_ros::MenohNodelet" base_class_type="nodelet::Nodelet">
+		<description>
+		</description>
+  </class>
+</library>
