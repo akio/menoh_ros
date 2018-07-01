@@ -1,0 +1,21 @@
+<launch>
+    <arg name="debug" default="false" />
+    <arg if="$(arg debug)" name="launch_prefix" default="xterm -e gdb --args" />
+    <arg unless="$(arg debug)" name="launch_prefix" default="" />
+
+    <node name="menoh" type="nodelet" pkg="nodelet" launch-prefix="$(arg launch_prefix)" output="screen"
+      args="standalone menoh_ros/MenohNodelet">
+        <param name="model" value="$(find menoh_ros)/data/VGG16.onnx" />
+        <param name="input_variable_name" type="string" value="140326425860192" />
+        <param name="output_variable_name" type="string" value="140326200803680" />
+        <param name="input_size" type="int" value="224" />
+        <param name="sysnet_words_path" type="string" value="$(find menoh_ros)/data/synset_words.txt" />
+        <rosparam param="input_map">
+          input:
+            var: "140326425860192"
+            size: 224
+          output:
+            var: "140326200803680"
+        </rosparam>
+    </node>
+</launch>

@@ -4,7 +4,8 @@ project(menoh_ros)
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED pluginlib nodelet cv_bridge roscpp sensor_msgs std_msgs)
+find_package(catkin REQUIRED
+  COMPONENTS pluginlib nodelet cv_bridge roscpp sensor_msgs std_msgs)
 
 include(ExternalProject)
 
@@ -51,7 +52,7 @@ find_package(PkgConfig)
 pkg_check_modules(menoh REQUIRED menoh)
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -170,6 +171,9 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${menoh_INCLUDE_DIRS})
 add_library(menoh_ros src/menoh_ros/nodelet.cpp)
 target_link_libraries(menoh_ros ${catkin_LIBRARIES} ${menoh_LIBRARIES})
 #add_dependencies(menoh_nodelet libmenoh)
+
+add_executable(menoh_node src/menoh_ros/node.cpp)
+target_link_libraries(menoh_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} menoh_ros)
 
 
 ## Add cmake target dependencies of the executable

@@ -1,22 +1,15 @@
+#include "menoh_ros/nodelet.h"
+
 #include <fstream>
 #include <iostream>
 #include <numeric>
 #include <queue>
-#include <string>
-#include <vector>
-#include <mutex>
 
 #include "pluginlib/class_list_macros.h"
 
 #include "opencv2/opencv.hpp"
 
-#include "nodelet/nodelet.h"
 #include "cv_bridge/cv_bridge.h"
-#include "ros/ros.h"
-#include "sensor_msgs/Image.h"
-#include "std_msgs/String.h"
-
-#include "menoh/menoh.hpp"
 
 namespace menoh_ros {
 
@@ -84,57 +77,11 @@ std::vector<std::string> load_category_list(std::string const& synset_words_path
 }
 
 
-class InputPluginBase {
- public:
-  InputPluginBase() = default;
-  virtual ~InputPluginBase() = default;
-
-  InputPluginBase(const InputPluginBase&) = delete;
-  InputPluginBase& operator=(const InputPluginBase&) = delete;
-
-  virtual void initialize(ros::NodeHandle& nh,
-                          std::vector<int32_t>& dst_dims) = 0;
-
-  virtual void execute(menoh::variable var) = 0;
-};
-
-//
-class OutputPluginBase {
- public:
-  OutputPluginBase() = default;
-  virtual ~OutputPluginBase() = default;
-
-  OutputPluginBase(const OutputPluginBase&) = delete;
-  OutputPluginBase& operator=(const OutputPluginBase&) = delete;
-
-  virtual void initialize(ros::NodeHandle& nh) = 0;
-
-  virtual void execute(menoh::variable var) = 0;
-};
-
-
-class VGG16InputPlugin : public InputPluginBase {
- public:
-  VGG16InputPlugin() = default;
-
-  void initialize(ros::NodeHandle& nh, std::vector<int32_t>& dst_dims) override;
-
-  void execute(menoh::variable var) override;
-
-  void inputCallback(const sensor_msgs::ImageConstPtr& msg);
-
- private:
-  ros::Subscriber sub_;
-  sensor_msgs::ImageConstPtr latest_image_;
-  std::mutex image_mutex_;
-  double scale_;
-  int32_t input_size_;
-};
 
 void VGG16InputPlugin::initialize(ros::NodeHandle& nh,
                                   std::vector<int32_t>& dst_dims) {
   // "input image width and height size"
-  nh.param<int>("input_size", input_size_);
+  nh.param<int>("input_size", input_size_, 224);
   auto height = input_size_;
   auto width = input_size_;
 
@@ -147,8 +94,11 @@ void VGG16InputPlugin::initialize(ros::NodeHandle& nh,
   sub_ = nh.subscribe("input", 1, &VGG16InputPlugin::inputCallback, this);
 }
 
-void VGG16InputPlugin::execute(menoh::variable var) {
+bool VGG16InputPlugin::execute(menoh::variable var) {
   std::lock_guard<std::mutex> lock(image_mutex_);
+  if (!latest_image_) {
+    return false;
+  }
   auto cv_image = cv_bridge::toCvShare(latest_image_);
   auto image_mat = cv_image->image;
   auto height = input_size_;
@@ -159,26 +109,18 @@ void VGG16InputPlugin::execute(menoh::variable var) {
 
   float* input_buff = static_cast<float*>(var.buffer_handle);
   std::copy(begin(image_data), end(image_data), input_buff);
+  return true;
 }
 
 void VGG16InputPlugin::inputCallback(const sensor_msgs::ImageConstPtr& msg) {
+  ROS_INFO("Image received");
   std::lock_guard<std::mutex> lock(image_mutex_);
   latest_image_ = msg;
 }
 
-class VGG16OutputPlugin : public OutputPluginBase {
- public:
-  VGG16OutputPlugin() = default;
-
-  void initialize(ros::NodeHandle& nh) override;
-
-  void execute(menoh::variable var) override;
-
- private:
-  ros::Publisher  pub_;
-};
 
 void VGG16OutputPlugin::initialize(ros::NodeHandle& nh) {
+  nh.param<std::string>("sysnet_words_path", synset_words_path_, "not set");
   pub_ = nh.advertise<std_msgs::String>("output", 1);
 }
 
@@ -186,65 +128,55 @@ void VGG16OutputPlugin::execute(menoh::variable var) {
   float* softmax_output_buff = static_cast<float*>(var.buffer_handle);
 
   // Get output
+  auto categories = load_category_list(synset_words_path_);
   auto top_k = 5;
   auto top_k_indices = extract_top_k_index_list(
       softmax_output_buff,
       softmax_output_buff + var.dims.at(1),
       top_k);
-
-  ROS_INFO_STREAM("top " << top_k << " categories are");
+  ROS_INFO_STREAM("top " << top_k << " categories:");
   for(auto ki : top_k_indices) {
-    std::cout << ki << " " << *(softmax_output_buff + ki) << std::endl;
+    ROS_INFO_STREAM("ki=" << ki);
+    ROS_INFO_STREAM("     " << ki << " " << *(softmax_output_buff + ki) << " "
+      << categories.at(ki));
   }
 
   std_msgs::String msg;
+  msg.data = categories.at(top_k_indices[0]);
   pub_.publish(msg);
 }
 
-class MenohNodelet : public nodelet::Nodelet {
- public:
-  MenohNodelet();
-
-  void onInit() override;
- private:
-  void timerCallback(const ros::TimerEvent& event);
-
-  std::unique_ptr<menoh::model> model_;
-
-  std::string backend_name_;
-
-  std::unique_ptr<InputPluginBase> input_plugin_;
-  std::unique_ptr<OutputPluginBase> output_plugin_;
-
-  std::string input_variable_name_;
-  std::string output_variable_name_;
-
-  ros::Timer timer_;
-};
 
 MenohNodelet::MenohNodelet() {
 
 }
 
 void MenohNodelet::onInit() {
-  auto nh = getNodeHandle();
+  ros::NodeHandle nh;
+  ros::NodeHandle private_nh("~");
 
   // onnx model path
   std::string onnx_model_path;
-  nh.param<std::string>("model", onnx_model_path);
-  // output variable name
-  nh.param<std::string>("input_variable_name", input_variable_name_);
-  // output variable name
-  nh.param<std::string>("output_variable_name", output_variable_name_);
+  private_nh.param<std::string>("model", onnx_model_path, "not set");
 
-  nh.param<std::string>("backend_name", backend_name_, "mkldnn");
+  ROS_INFO_STREAM("param = " << private_nh.resolveName("model"));
+  ROS_INFO_STREAM("model = " << onnx_model_path);
+
+  // output variable name
+  private_nh.param<std::string>("input_variable_name", input_variable_name_, "input");
+  // output variable name
+  private_nh.param<std::string>("output_variable_name", output_variable_name_, "output");
+
+  private_nh.param<std::string>("backend_name", backend_name_, "mkldnn");
 
   std::vector<int32_t> dims;
   input_plugin_.reset(new VGG16InputPlugin());
-  input_plugin_->initialize(nh, dims);
+  input_plugin_->initialize(private_nh, dims);
+  ROS_INFO("Input plugin initialized");
 
   output_plugin_.reset(new VGG16OutputPlugin());
-  output_plugin_->initialize(nh);
+  output_plugin_->initialize(private_nh);
+  ROS_INFO("Output plugin initialized");
 
   menoh::variable_profile_table_builder vpt_builder;
   vpt_builder.add_input_profile(input_variable_name_,
@@ -262,18 +194,30 @@ void MenohNodelet::onInit() {
   model_.reset(new menoh::model(model_builder.build_model(model_data, backend_name_)));
 
   timer_ = nh.createTimer(ros::Duration(), &MenohNodelet::timerCallback, this);
+
+//   output_pub_ = private_nh.advertise<std_msgs::Float32MultiArray>("output", 1);
+//   input_sub_ = private_nh.subscribe<std_msgs::Float32MultiArray>(
+//       "input", 1, &MenohNodelet::inputCallback, this);
 }
 
 void MenohNodelet::timerCallback(const ros::TimerEvent& event) {
   // Get buffer pointer of output
   auto input_var = model_->get_variable(input_variable_name_);
-  input_plugin_->execute(input_var);
+  if (!input_plugin_->execute(input_var)) {
+    return;
+  }
 
   // Run inference
   model_->run();
 
   auto output_var = model_->get_variable(output_variable_name_);
   output_plugin_->execute(output_var);
+}
+
+void MenohNodelet::inputCallback(const std_msgs::Float32MultiArray::ConstPtr& msg) {
+  auto input_var = model_->get_variable(input_variable_name_);
+  model_->run();
+  auto output_var = model_->get_variable(output_variable_name_);
 }
 
 
