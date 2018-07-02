@@ -168,13 +168,12 @@ include_directories(include ${catkin_INCLUDE_DIRS} ${menoh_INCLUDE_DIRS})
 # add_dependencies(menoh_ros ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
-add_library(menoh_ros src/menoh_ros/nodelet.cpp)
+add_library(menoh_ros
+    src/menoh_ros/nodelet.cpp
+    src/menoh_ros/io_nodelets.cpp
+)
 target_link_libraries(menoh_ros ${catkin_LIBRARIES} ${menoh_LIBRARIES})
 #add_dependencies(menoh_nodelet libmenoh)
-
-add_executable(menoh_node src/menoh_ros/node.cpp)
-target_link_libraries(menoh_node ${catkin_LIBRARIES} ${Boost_LIBRARIES} menoh_ros)
-
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

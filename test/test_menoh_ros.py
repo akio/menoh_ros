@@ -24,7 +24,7 @@ class MenohRosTest(unittest.TestCase):
         bridge = cv_bridge.CvBridge()
         image_msg = bridge.cv2_to_imgmsg(image)
 
-        pub = rospy.Publisher('/menoh/input', Image, queue_size=1)
+        pub = rospy.Publisher('/image_input/input', Image, queue_size=1)
 
         while pub.get_num_connections() == 0:
             if rospy.is_shutdown():
@@ -35,7 +35,7 @@ class MenohRosTest(unittest.TestCase):
 
         pub.publish(image_msg)
 
-        result_msg = rospy.wait_for_message('/menoh/output', String)
+        result_msg = rospy.wait_for_message('/category_output/output', String)
 
         self.assertEqual(result_msg.data, 'n01514859 hen')
 

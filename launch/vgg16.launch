@@ -3,19 +3,26 @@
     <arg if="$(arg debug)" name="launch_prefix" default="xterm -e gdb --args" />
     <arg unless="$(arg debug)" name="launch_prefix" default="" />
 
+    <node name="menoh_nodelet_manager" type="nodelet" pkg="nodelet" args="manager" output="screen"/>
+
     <node name="menoh" type="nodelet" pkg="nodelet" launch-prefix="$(arg launch_prefix)" output="screen"
-      args="standalone menoh_ros/MenohNodelet">
+      args="load menoh_ros/MenohNodelet menoh_nodelet_manager">
         <param name="model" value="$(find menoh_ros)/data/VGG16.onnx" />
         <param name="input_variable_name" type="string" value="140326425860192" />
         <param name="output_variable_name" type="string" value="140326200803680" />
-        <param name="input_size" type="int" value="224" />
-        <param name="sysnet_words_path" type="string" value="$(find menoh_ros)/data/synset_words.txt" />
-        <rosparam param="input_map">
-          input:
-            var: "140326425860192"
-            size: 224
-          output:
-            var: "140326200803680"
-        </rosparam>
+        <rosparam param="input_dims">[1, 3, 224, 224]</rosparam>
     </node>
+
+    <node name="image_input" type="nodelet" pkg="nodelet" output="screen"
+      args="load menoh_ros/ImageInputNodelet menoh_nodelet_manager">
+        <param name="input_size" type="int" value="224" />
+        <remap from="/image_input/output" to="/menoh/input" />
+    </node>
+
+    <node name="category_output" type="nodelet" pkg="nodelet" output="screen"
+      args="load menoh_ros/CategoryOutputNodelet menoh_nodelet_manager">
+        <param name="category_names_path" type="string" value="$(find menoh_ros)/data/synset_words.txt" />
+        <remap from="/category_output/input" to="/menoh/output" />
+    </node>
+
 </launch>

@@ -3,4 +3,14 @@
 		<description>
 		</description>
   </class>
+  <class name="menoh_ros/ImageInputNodelet" type="menoh_ros::ImageInputNodelet" base_class_type="nodelet::Nodelet">
+		<description>
+		</description>
+  </class>
+
+  <class name="menoh_ros/CategoryOutputNodelet" type="menoh_ros::CategoryOutputNodelet" base_class_type="nodelet::Nodelet">
+		<description>
+		</description>
+  </class>
 </library>
+
