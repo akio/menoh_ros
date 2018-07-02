@@ -1,10 +1,5 @@
 <launch>
-    <node name="menoh_node" type="menoh_node" pkg="menoh_ros" output="screen">
-        <param name="model" value="$(find menoh_ros)/data/VGG16.onnx" />
-        <param name="input_variable_name" type="string" value="140326425860192" />
-        <param name="output_variable_name" type="string" value="140326200777584" />
-        <param name="input_size" type="int" value="224" />
-    </node>
+    <include file="$(find menoh_ros)/launch/vgg16.launch" />
 
     <test test-name="vgg16_test" type="test_menoh_ros.py" pkg="menoh_ros" time-limit="100.0"/>
 </launch>

@@ -41,6 +41,5 @@ class MenohRosTest(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    #rostest.rosrun('menoh_ros', 'menoh_ros_test', MenohRosTest)
     rospy.init_node("test_vgg16")
-    unittest.main()
+    rostest.rosrun('menoh_ros', 'menoh_ros_test', MenohRosTest)
