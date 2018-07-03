@@ -52,7 +52,6 @@ pkg_check_modules(menoh REQUIRED menoh)
 
 find_package(Boost REQUIRED COMPONENTS system)
 
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -60,7 +59,7 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES menoh_ros
   CATKIN_DEPENDS nodelet
-  DEPENDS boost
+  DEPENDS Boost
 )
 
 ###########
