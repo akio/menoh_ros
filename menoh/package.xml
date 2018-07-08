@@ -21,6 +21,7 @@
 
   <buildtool_depend>cmake</buildtool_depend>
 
+  <depend>curl</depend>
   <depend>protobuf</depend>
   <depend>protobuf-dev</depend>
 
