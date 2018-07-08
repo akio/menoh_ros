@@ -6,9 +6,6 @@ find_package(
   COMPONENTS pluginlib nodelet cv_bridge roscpp sensor_msgs std_msgs
 )
 
-
-find_package(PkgConfig)
-
 find_package(menoh CONFIG REQUIRED)
 
 find_package(Boost REQUIRED COMPONENTS system)
