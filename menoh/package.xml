@@ -1,0 +1,29 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>menoh</name>
+  <version>1.0.2</version>
+  <description>
+      This package provides Catkin support to Menoh DNN inference library developed by Preferred Networks Inc..
+
+      External software contained in this package have their own license.
+      * The Intel® Math Kernel Library is licensed under Intel Simplified Software License.
+      * The Intel® MKL-DNN is licensed under Apache Software License 2.0.
+      * The ONNX library is licensed under MIT License.
+      * The Menoh library is licensed under MIT License.
+  </description>
+
+  <maintainer email="akio.code@gmail.com">Akio Ochiai</maintainer>
+
+  <license>MIT</license>
+  <license>Apache 2.0</license>
+  <license>Intel Simplified Software License</license>
+
+  <url type="website">https://github.com/pfnet-research/menoh</url>
+  <author email="kokuzen@gmail.com">Shintarou Okada</author>
+
+  <buildtool_depend>cmake</buildtool_depend>
+
+  <export>
+      <build_type>cmake</build_type>
+  </export>
+</package>

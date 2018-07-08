@@ -1,0 +1,4 @@
+set(menoh_INCLUDE_DIRS "@MENOH_INCLUDE_DIR@")
+set(menoh_LIBRARY_DIRS "@MENOH_LIB_DIR@")
+set(menoh_LIBRARIES "@MENOH_LIBRARIES@")
+
