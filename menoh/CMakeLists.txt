@@ -12,21 +12,11 @@ message(STATUS "CMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}")
 message(STATUS "CATKIN_DEVEL_PREFIX=${CATKIN_DEVEL_PREFIX}")
 
 ExternalProject_Add(
-    mkl
-    PREFIX mkl
-    BUILD_IN_SOURCE 1
-    URL "${MKL_URL_ROOT}/mklml_lnx_${MKL_VERSION}.tgz"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory . ${CMAKE_INSTALL_PREFIX}/
-)
-
-ExternalProject_Add(
     mkldnn
     PREFIX mkldnn
     BUILD_IN_SOURCE 1
     URL ${MKLDNN_URL}
-    CONFIGURE_COMMAND ${CMAKE_COMMAND} . -DMKLINC=${CMAKE_INSTALL_PREFIX}/include -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
+    CONFIGURE_COMMAND ./scripts/prepare_mkl.sh && ${CMAKE_COMMAND} . -DMKLINC=${CMAKE_INSTALL_PREFIX}/include -DCMAKE_INSTALL_PREFIX=${CMAKE_INSTALL_PREFIX}
     BUILD_COMMAND make
     INSTALL_COMMAND make install
 )
@@ -43,7 +33,6 @@ ExternalProject_Add(
     INSTALL_COMMAND make install
 )
 
-add_dependencies(mkldnn mkl)
 add_dependencies(libmenoh mkldnn)
 
 set(MENOH_INCLUDE_DIR ${CMAKE_INSTALL_PREFIX}/include)
