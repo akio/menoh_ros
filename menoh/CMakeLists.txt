@@ -51,6 +51,6 @@ install(
 )
 
 install(
-    FILES package.xml LICENSE LICENSE.menoh LICENSE.onnx LICENSE.mkldnn LICENSE.mkl
+    FILES package.xml LICENSE LICENSE.menoh LICENSE.onnx LICENSE.mkldnn
     DESTINATION ${CMAKE_INSTALL_PREFIX}/share/menoh/
 )
