@@ -24,6 +24,7 @@
   <buildtool_depend>cmake</buildtool_depend>
 
   <depend>protobuf</depend>
+  <depend>protobuf-dev</depend>
 
   <export>
       <build_type>cmake</build_type>
